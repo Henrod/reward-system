@@ -6,7 +6,6 @@
 
 ; File directory
 (def input-file "resources/files/test.txt")
-
 ; Graph that represent the company, its customers and the invitations (connections)
 (def company (graph/build-graph (graph/->Graph {}) input-file))
 
@@ -29,6 +28,7 @@
    " ]"])
 
 (defn home-page
+	"Builds the home page"
 	[x]
 	(hic-p/html5
 		(gen-page-head "Home")
@@ -38,6 +38,7 @@
 		[:h3 (util/input-html input-file)]))
 
 (defn add-customer-page
+	"Builds the page where customers can be invited."
 	[]
 	(hic-p/html5
 		(gen-page-head "New customer")
@@ -49,15 +50,17 @@
 		[:p [:input {:type "submit" :value "Submit a customer"}]]]))
 
 (defn add-customer-results-page
-[{:keys [src dst]}]
-	(def company (graph/add-customer company src dst))
-	(hic-p/html5
-   	(gen-page-head "New customer")
-   	header-links
-   	[:h1 "Added a Customer"]
-   	[:p "Customer " src " invited customer " dst "."]))
+	"Adds customer to graph and build page."
+	[{:keys [src dst]}]
+		(def company (graph/add-customer company src dst))
+		(hic-p/html5
+		(gen-page-head "New customer")
+		header-links
+		[:h1 "Added a Customer"]
+		[:p "Customer " src " invited customer " dst "."]))
 
 (defn all-customers-page
+	"Returns tha graph, each node and the nodes he is connected to."
 	[]
 	(hic-p/html5
     (gen-page-head "All customer")
@@ -66,6 +69,7 @@
     	[:h3 (graph/graph-html company)]))
 
 (defn rank-page
+	"Returns the page with the rank in JSON format."
 	[]
 	(hic-p/html5
 	(gen-page-head "Rank")

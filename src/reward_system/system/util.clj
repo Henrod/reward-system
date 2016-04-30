@@ -11,5 +11,5 @@
 	(let [input-list (atom "")]
 	(with-open [rdr (reader input-file)]
 		(doseq [line (line-seq rdr)]
-			(swap! input-list #(println-str %1 line "</br>"))))
+			(swap! input-list #(str %1 line "</br>"))))
 			@input-list))
