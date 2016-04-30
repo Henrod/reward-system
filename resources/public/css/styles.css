@@ -1,0 +1,12 @@
+body {
+    background-color: gray;
+}
+
+#header-links {
+    background-color: lightgray;
+    padding: 10px;
+}
+
+h1 {
+    color: black;
+}
