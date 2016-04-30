@@ -1,15 +1,14 @@
 (ns reward-system.web.views
 	(:require [clojure.string :as str]
         	[hiccup.page :as hic-p]
-			[reward-system.system.core :as core]
 			[reward-system.system.graph :as graph]
-			))
+			[reward-system.system.util :as util]))
 
 ; File directory
 (def input-file "resources/files/test.txt")
 
 ; Graph that represent the company, its customers and the invitations (connections)
-(def company (core/build-graph (graph/->Graph {}) input-file))
+(def company (graph/build-graph (graph/->Graph {}) input-file))
 
 (defn gen-page-head
   [title]
@@ -36,7 +35,7 @@
 		header-links
 		[:h1 "Reward System"]
 		[:h2 "Customers sequence of invitation from file:"]
-		[:h3 (core/input-html input-file)]))
+		[:h3 (util/input-html input-file)]))
 
 (defn add-customer-page
 	[]
@@ -51,7 +50,7 @@
 
 (defn add-customer-results-page
 [{:keys [src dst]}]
-	(def company (core/add-customer company src dst))
+	(def company (graph/add-customer company src dst))
 	(hic-p/html5
    	(gen-page-head "New customer")
    	header-links
@@ -64,7 +63,7 @@
     (gen-page-head "All customer")
     	header-links
     	[:h1 "List of customers and how they are related."]
-    	[:h3 (core/graph-html company)]))
+    	[:h3 (graph/graph-html company)]))
 
 (defn rank-page
 	[]
@@ -72,4 +71,4 @@
 	(gen-page-head "Rank")
     	header-links
     	[:h1 "Rank of all Customers in company by Score"]
-    	[:h3 (core/rank-html company)]))
+    	[:h3 (graph/rank-html company)]))
