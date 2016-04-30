@@ -10,7 +10,6 @@
 
 ; Graph that represent the company, its customers and the invitations (connections)
 (def company (core/build-graph (graph/->Graph {}) input-file))
-(println company)
 
 (defn gen-page-head
   [title]
@@ -26,6 +25,8 @@
    [:a {:href "/add-customer"} "Add a Customer"]
    " | "
    [:a {:href "/all-customers"} "View All Customers"]
+   " | "
+   [:a {:href "/rank"} "View rank of Customers"]
    " ]"])
 
 (defn home-page
@@ -60,7 +61,15 @@
 (defn all-customers-page
 	[]
 	(hic-p/html5
-    (gen-page-head "Rank")
+    (gen-page-head "All customer")
+    	header-links
+    	[:h1 "List of customers and how they are related."]
+    	[:h3 (core/graph-html company)]))
+
+(defn rank-page
+	[]
+	(hic-p/html5
+	(gen-page-head "Rank")
     	header-links
     	[:h1 "Rank of all Customers in company by Score"]
     	[:h3 (core/rank-html company)]))

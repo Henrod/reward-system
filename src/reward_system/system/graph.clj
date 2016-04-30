@@ -8,7 +8,8 @@
 (defprotocol NodeOperations
 	"A protocol to represent customer as nodes in a graph"
 	(add-node-link [this new-node] "Add new node to linked nodes")
-	(print-node [this] "Print the attributes of a node"))
+	(print-node [this] "Print the attributes of a node")
+	(html-node [this data] "Returns attributes of a node in html format"))
 
 ; Customer record.
 	; value: number representing customer in the network
@@ -29,7 +30,14 @@
 		(doseq [linked-node (.links this)]
 			(print (.value linked-node) " "))
 		(println ""))
-	)
+
+	(html-node [this data]
+		(let [html (atom data)]
+			(swap! html #(str %1 "value: " (.value this) "    ,    parent: " (.parent this) "    ,    score: " (.score this) "    ,    links: "))
+			(doseq [linked-node (.links this)]
+				(swap! html #(str %1 (.value linked-node) " ")))
+			(swap! html #(str %1 "</br>"))
+			@html)))
 
 (defn make-node [parent value]
 	"Create node with default values. Parent is only the integer representing its value."
@@ -44,7 +52,8 @@
 	(print! [this] "Print all nodes in the graph and their links.")
 	(update-parents [this start-node] "Update parents score after node added.")
 	(print-json [this] "Print the rank in JSON format.")
-	(html-json [this] "Returns the rank in JSON format to be printed in html."))
+	(html-json [this] "Returns the rank in JSON format to be printed in html.")
+	(html-graph [this] "Returns the graph values to be printed in html."))
 
 ; Graph is a map with all nodes in the graph. Each node has a list of nodes linked to itself.
 (defrecord Graph [graph-map]
@@ -133,4 +142,10 @@
 						(swap! itr-count #(inc %1))))
 				(swap! json #(str %1 "}"))
 				@json))
+
+		(html-graph [this]
+			(let [html (atom "")]
+			(doseq [[value node] (.graph-map this)]
+				(swap! html #(html-node node %1)))
+			@html))
 	)

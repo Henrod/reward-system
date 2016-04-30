@@ -14,6 +14,7 @@
         {params :params}
         (views/add-customer-results-page params))
 	(GET "/all-customers" [] (views/all-customers-page))
+	(GET "/rank" [] (views/rank-page))
 	(resources "/")
 	(route/not-found "Not Found"))
 

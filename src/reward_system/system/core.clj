@@ -14,16 +14,13 @@
 					(let [link (str/split first-line #"\s")]
 						(def tmp-company (graph/add-node tmp-company
 							(graph/make-node nil (link 0))))
-						(graph/print! tmp-company)
 
 						(def tmp-company (graph/add-node tmp-company
 							(graph/make-node (link 0) (link 1))))
-							(graph/print! tmp-company))
 				(doseq [line (line-seq rdr)]
 					(let [link (str/split line #"\s")]
 						(let [src (link 0) dst (link 1)]
-							(def tmp-company (graph/add-node tmp-company (graph/make-node src dst)))))
-							(graph/print! tmp-company))))))
+							(def tmp-company (graph/add-node tmp-company (graph/make-node src dst)))))))))))
 	tmp-company)
 
 (defn input-html
@@ -38,10 +35,14 @@
 (defn rank-html
 	"Return string in of the rank of the company."
 	[company]
-	(graph/print-json company)
 	(graph/html-json company))
 
 (defn add-customer
 	"Receive customer source and customer destination from POST and add them to graph."
 	[company src dst]
 	(graph/add-node company (graph/make-node src dst)))
+
+(defn graph-html
+	"Graph in html format"
+	[company]
+	(graph/html-graph company))

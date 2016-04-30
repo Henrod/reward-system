@@ -1,6 +1,6 @@
 # reward-system
 
-FIXME
+System that represents a company that rewards its customers.
 
 ## Prerequisites
 
@@ -16,4 +16,4 @@ To start a web server for the application, run:
 
 ## License
 
-Copyright © 2016 FIXME
+Copyright © 2016 ISC	
