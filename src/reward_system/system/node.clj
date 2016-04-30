@@ -37,6 +37,6 @@
 
 (defn build-node [parent value]
 	"Create node with default values. Parent is only the integer representing its value."
-	(if (= parent nil)
+	(if (nil? parent)
 		(->Node (util/parse-int value) nil 0 ())
 		(->Node (util/parse-int value) (util/parse-int parent) 0 ())))

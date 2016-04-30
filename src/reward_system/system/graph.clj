@@ -5,9 +5,6 @@
 			  [clojure.string :as str])
 	(:use clojure.java.io))
 
-; List to hold all customers in the company
-(def customers (cl/->customers-list ()))
-
 (defprotocol GraphOperations
 	"Protocol with all methods that a graph must have"
 	(build-graph [this input-file] "Read inputs from file and build the customers list and the graph")
@@ -20,7 +17,7 @@
 
 ; Graph is a map with all nodes in the graph. Each node has a list of nodes linked to itself.
 ; Customers is a list of nodes that are already int the graph
-(defrecord Graph [graph-map]
+(defrecord Graph [graph-map customers]
 	GraphOperations
 	(build-graph [this input-file]
 		(let [tmp-this (atom this)]
@@ -43,25 +40,31 @@
 			(let [parent-node (.parent new-node)]
 			(if (nil? parent-node)
 				(do
-					(if (cl/not-has? customers (.value new-node))
-							(def customers (cl/add customers (.value new-node))))
-					(swap! new-graph #(->Graph (assoc (.graph-map %1) (keyword (str (.value new-node))) new-node))))
+					(if (cl/not-has? (.customers @new-graph) (.value new-node))
+							(swap! new-graph
+								#(->Graph
+									(.graph-map %1)
+									(cl/add (.customers %1) (.value new-node)))))
+					(swap! new-graph #(->Graph (assoc (.graph-map %1) (keyword (str (.value new-node))) new-node) (.customers %1))))
+
 				(do
 					(let [parent ((.graph-map @new-graph) (keyword (str parent-node)))]
-						(swap! new-graph #(->Graph
-							(assoc (.graph-map %1)
-								(keyword (str parent-node)) (node/add-link parent new-node))))
-						(if (cl/not-has? customers (.value new-node))
+						(swap! new-graph
+							#(->Graph
+								(assoc (.graph-map %1) (keyword (str parent-node)) (node/add-link parent new-node))
+								(.customers %1)))
+
+						(if (cl/not-has? (.customers @new-graph) (.value new-node))
 							(do
-								(def customers (cl/add customers (.value new-node)))
-								(swap! new-graph #(->Graph
-									(assoc (.graph-map %1)
-										(keyword (str (.value new-node))) new-node)))))))))
+								(swap! new-graph
+									#(->Graph
+										(assoc (.graph-map %1) (keyword (str (.value new-node))) new-node)
+										(cl/add (.customers %1) (.value new-node)))))))))
 			(swap! new-graph #(update-parents %1 new-node))
-			@new-graph))
+			@new-graph)))
 
 	(print! [this]
-		(cl/print! customers)
+		(cl/print! (.customers this))
 		(doseq [[value node] (.graph-map this)]
 			(node/print! node))
 		(println ""))
@@ -84,7 +87,8 @@
 									(.parent next-parent)
 									(+ factor (.score next-parent))
 									(.links next-parent))]
-								(swap! new-graph #(->Graph (assoc (.graph-map %1) (keyword (str (.value new-parent))) new-parent)))
+								(swap! new-graph #(->Graph (assoc (.graph-map %1) (keyword (str (.value new-parent))) new-parent)
+									(.customers %1)))
 								(recur
 									(.value parent)
 									((keyword (str (.parent parent))) (.graph-map @new-graph))

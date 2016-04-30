@@ -2,12 +2,16 @@
 	(:require [clojure.string :as str]
         	[hiccup.page :as hic-p]
 			[reward-system.system.graph :as graph]
-			[reward-system.system.util :as util]))
+			[reward-system.system.util :as util]
+			[reward-system.system.customerslist :as cl]))
 
 ; File directory
-(def input-file "resources/files/test.txt")
+(def input-file "resources/files/input.txt")
+
 ; Graph that represent the company, its customers and the invitations (connections)
-(def company (graph/build-graph (graph/->Graph {}) input-file))
+(def company (graph/build-graph
+				(graph/->Graph {} (cl/->customers-list ()))
+				input-file))
 
 (defn gen-page-head
   [title]
