@@ -1,57 +1,17 @@
 (ns reward-system.system.graph
 	(:require [reward-system.system.customerslist :as cl]
 			  [reward-system.system.util :as util]
+			  [reward-system.system.node :as node]
 			  [clojure.string :as str])
 	(:use clojure.java.io))
 
 ; List to hold all customers in the company
 (def customers (cl/->customers-list ()))
 
-(defprotocol NodeOperations
-	"A protocol to represent customer as nodes in a graph"
-	(add-node-link [this new-node] "Add new node to linked nodes")
-	(print-node [this] "Print the attributes of a node")
-	(html-node [this data] "Returns attributes of a node in html format"))
-
-; Customer record.
-	; value: number representing customer in the network
-	; parent: first person who invited this customer
-	; score: reward
-	; links:  list of nodes connected (customers this invited)
-(defrecord Node [value parent score links]
-	NodeOperations
-	(add-node-link [this new-node]
-		(->Node
-			(.value this)
-			(.parent this)
-			(.score this)
-			(cons new-node (.links this))))
-
-	(print-node [this]
-		(print "value:" (.value this) ", parent:" (.parent this) ", score:" (.score this) ", links: " )
-		(doseq [linked-node (.links this)]
-			(print (.value linked-node) " "))
-		(println ""))
-
-	(html-node [this data]
-		(let [html (atom data)]
-			(swap! html #(str %1 "value: " (.value this) "    ,    parent: " (.parent this) "    ,    score: " (.score this) "    ,    links: "))
-			(doseq [linked-node (.links this)]
-				(swap! html #(str %1 (.value linked-node) " ")))
-			(swap! html #(str %1 "</br>"))
-			@html)))
-
-(defn make-node [parent value]
-	"Create node with default values. Parent is only the integer representing its value."
-	(if (= parent nil)
-		(->Node (util/parse-int value) nil 0 ())
-		(->Node (util/parse-int value) (util/parse-int parent) 0 ())))
-
 (defprotocol GraphOperations
 	"Protocol with all methods that a graph must have"
 	(build-graph [this input-file] "Read inputs from file and build the customers list and the graph")
-	(add-customer [this new-node] "Add a new connection to the parent node. new-node: instance of type Node")
-	(add-customer [this src dst])
+	(add-customer [this src dst] "Add a new connection to the parent node. new-node: instance of type Node")
 	(print! [this] "Print all nodes in the graph and their links.")
 	(update-parents [this start-node] "Update parents score after node added.")
 	(print-json [this] "Print the rank in JSON format.")
@@ -69,17 +29,17 @@
 					(println "Empty file")
 					(do
 						(let [link (str/split first-line #"\s")]
-							(swap! tmp-this #(add-customer %1 (make-node nil (link 0))))
-							(swap! tmp-this #(add-customer %1 (make-node (link 0) (link 1))))
+							(swap! tmp-this #(add-customer %1 nil (link 0)))
+							(swap! tmp-this #(add-customer %1 (link 0) (link 1)))
 					(doseq [line (line-seq rdr)]
 						(let [link (str/split line #"\s")]
 							(let [src (link 0) dst (link 1)]
-								(swap! tmp-this #(add-customer %1 (make-node src dst)))))))))))
+								(swap! tmp-this #(add-customer %1 src dst))))))))))
 		@tmp-this))
 
-	(add-customer [this new-node]
+	(add-customer [this src dst]
 		(def new-graph this)
-
+		(def new-node (node/build-node src dst))
 		(let [parent-node (.parent new-node)]
 		(if (= parent-node nil)
 			(do
@@ -90,7 +50,7 @@
 				(let [parent ((.graph-map new-graph) (keyword (str parent-node)))]
 					(def new-graph (->Graph
 						(assoc (.graph-map new-graph)
-							(keyword (str parent-node)) (add-node-link parent new-node))))
+							(keyword (str parent-node)) (node/add-link parent new-node))))
 					(if (cl/not-has? customers (.value new-node))
 						(do
 							(def customers (cl/add customers (.value new-node)))
@@ -100,12 +60,10 @@
 		(def new-graph (update-parents new-graph new-node))
 		new-graph)
 
-	(add-customer [this src dst])
-
 	(print! [this]
 		(cl/print! customers)
 		(doseq [[value node] (.graph-map this)]
-			(print-node node))
+			(node/print! node))
 		(println ""))
 
 	(update-parents [this base]
@@ -121,7 +79,7 @@
 					new-graph
 					(let [next-parent ((keyword (str (.parent parent))) (.graph-map new-graph))]
 						(let [new-parent
-							(->Node
+							(node/->Node
 								(.value next-parent)
 								(.parent next-parent)
 								(+ factor (.score next-parent))
@@ -167,5 +125,5 @@
 	(graph-html [this]
 		(let [html (atom "")]
 		(doseq [[value node] (.graph-map this)]
-			(swap! html #(html-node node %1)))
+			(swap! html #(node/html-node node %1)))
 		@html)))

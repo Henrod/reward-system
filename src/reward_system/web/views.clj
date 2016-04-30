@@ -55,7 +55,7 @@
    	(gen-page-head "New customer")
    	header-links
    	[:h1 "Added a Customer"]
-   	[:p "Added [" src ", " dst "] "]))
+   	[:p "Customer " src " invited customer " dst "."]))
 
 (defn all-customers-page
 	[]
