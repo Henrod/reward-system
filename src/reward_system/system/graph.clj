@@ -41,7 +41,7 @@
 		(def new-graph this)
 		(def new-node (node/build-node src dst))
 		(let [parent-node (.parent new-node)]
-		(if (= parent-node nil)
+		(if (nil? parent-node)
 			(do
 				(if (cl/not-has? customers (.value new-node))
 						(def customers (cl/add customers (.value new-node))))

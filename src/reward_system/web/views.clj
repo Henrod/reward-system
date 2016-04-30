@@ -52,12 +52,17 @@
 (defn add-customer-results-page
 	"Adds customer to graph and build page."
 	[{:keys [src dst]}]
-		(def company (graph/add-customer company src dst))
-		(hic-p/html5
+	(hic-p/html5
 		(gen-page-head "New customer")
 		header-links
-		[:h1 "Added a Customer"]
-		[:p "Customer " src " invited customer " dst "."]))
+		(try
+			(def company (graph/add-customer company src dst))
+			[:h1 "Added a Customer"]
+			[:p "Customer " src " invited customer " dst "."]
+		(catch NumberFormatException e
+			[:p "Those are not both numbers!"])
+		(catch IllegalArgumentException e
+			[:p "Only a customer in the company can invite others."]))))
 
 (defn all-customers-page
 	"Returns tha graph, each node and the nodes he is connected to."
