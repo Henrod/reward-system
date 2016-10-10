@@ -85,6 +85,9 @@
 	(GET "/" [] {:status 200
 				 :headers {"Content-Type" "application/json"}
 				 :body (parse-result (build (input-from-file "test/reward_system/input.txt")))})
+	(GET "/little" [] {:status 200
+				 :headers {"Content-Type" "application/json"}
+				 :body (parse-result (build (input-from-file "test/reward_system/little_input.txt")))})
 	(POST "/" req 
 		(let [obj (json/read-str ((:params req) "obj")  :key-fn keyword)
 			  input (reduce #(concat %1 (map (fn [elm] (if (keyword? elm) elm (keyword (str elm)))) %2)) [] (seq obj))]
