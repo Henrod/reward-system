@@ -31,7 +31,7 @@
 	(if (= src dst)
 		obj
 		(if (contains? obj src)
-			(if (some #{dst} (:neighbors (src obj)))
+			(if (some #{dst} (get-in obj [src :neighbors]))
 				obj
 				(let [new-obj (update-in obj [src :neighbors] #(conj % dst))]
 					(if (contains? obj dst)
@@ -62,7 +62,7 @@
 	[file-path]
 	(let [input (ref []) to-key #(keyword (str %))]
 		(with-open [rdr (io/reader file-path)]
-			(doseq [line (line-seq rdr)] ;PORQUE FOR NÂO FUNCIONA AQUI???
+			(doseq [line (line-seq rdr)]
 				(let [[src dst] (map to-key (clojure.string/split line #" "))]
 					(dosync (alter input conj src dst)))))
 		@input))
