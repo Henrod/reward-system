@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [reward-system.core :refer :all]))
 
-(def number-of-tests 10)
+(def number-of-tests 100)
 (def max-number (* number-of-tests 10))
 
 (defn- rand-number-keyword
