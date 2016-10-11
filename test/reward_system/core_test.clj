@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [reward-system.core :refer :all]))
 
-(def number-of-tests 100)
+(def number-of-tests 10)
 (def max-number (* number-of-tests 10))
 
 (defn- rand-number-keyword
@@ -66,28 +66,28 @@
 	  			(recur 
 	  				users#
 	  				(:parent (result (first users#)))
-	  				(loop [k 1.0M [level-count level-parents been-invited] [count parents been-invited]]
-	  					(if (empty? level-parents)
-	  						level-count
+	  				(loop [k 1.0M [count# parents# been-invited] [count parents been-invited]]
+	  					(if (empty? parents#)
+	  						count#
 		  					(recur 
 		  						(/ k 2) 
-			  					(loop [[parent & parents#] level-parents
-			  							inner-count level-count 
+			  					(loop [[parent & parents#] parents#
+			  							count# count# 
 			  							next-parents [] 
-			  							next-been-invited been-invited]
+			  							been-invited# been-invited]
 			  						(if parent
-					  					(if (or (empty? (:neighbors (result user))) (contains? next-been-invited user))
+					  					(if (or (empty? (:neighbors (result user))) (contains? been-invited# user))
 					  						(recur 
 					  							parents# 
-					  							inner-count 
+					  							count# 
 					  							(concat next-parents (:parent (result parent))) 
-					  							(conj next-been-invited user))
+					  							(conj been-invited# user))
 					  						(recur
 					  							parents#
-					  							(update inner-count parent  #(+ % k))
+					  							(update count# parent  #(+ % k))
 					  							(concat next-parents (:parent (result parent))) 
-					  							(conj next-been-invited user)))
-					  					[inner-count next-parents been-invited])))))
+					  							(conj been-invited# user)))
+					  					[count# next-parents been-invited])))))
 	  				(conj been-invited user))))))
 
 (deftest build-test

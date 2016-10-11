@@ -14,10 +14,7 @@
 
 (defn- get-parent
 	[src obj]
-	(let [ps (:parent (src obj))]
-		(if (empty? ps)
-			nil 
-			(ps 0))))
+	(get-in obj [src :parent 0]))
 
 (defn update-points
 	[obj src k]
@@ -38,10 +35,10 @@
 				obj
 				(let [new-obj (update-in obj [src :neighbors] #(conj % dst))]
 					(if (contains? obj dst)
-						(if (empty? (:neighbors (src obj)))
+						(if (empty? (get-in obj [src :neighbors]))
 							(update-points (update-in new-obj [dst :parent] #(conj % src)) src -1)
 							new-obj)
-						(if (empty? (:neighbors (src obj)))
+						(if (empty? (get-in obj [src :neighbors]))
 							(update-points
 								(assoc 
 									new-obj
@@ -50,8 +47,8 @@
 							(assoc 
 								new-obj
 								dst {:neighbors [] :parent [src] :point 0})))))
-			(assoc 
-				(assoc  obj src {:neighbors [dst] :parent [] :point 0})
+			(assoc  obj 
+				src {:neighbors [dst] :parent [] :point 0} 
 				dst {:neighbors [] :parent [src] :point 0}))))
 
 (defn build
@@ -66,10 +63,8 @@
 	(let [input (ref []) to-key #(keyword (str %))]
 		(with-open [rdr (io/reader file-path)]
 			(doseq [line (line-seq rdr)] ;PORQUE FOR NÂO FUNCIONA AQUI???
-				(let [numbers (clojure.string/split line #" ") 
-				  src (to-key (first numbers)) 
-				  dst (to-key (second numbers))]
-				(dosync (alter input conj [src dst])))))
+				(let [[src dst] (map to-key (clojure.string/split line #" "))]
+					(dosync (alter input conj [src dst])))))
 		@input))
 
 (defn parse-result
