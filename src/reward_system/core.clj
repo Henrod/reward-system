@@ -10,23 +10,24 @@
 
 (defn add-to-input
 	[input & pairs]
-	(into [] (concat input (map #(into [] %) (partition 2 pairs)))))
+	(vec (concat input (map vec (partition 2 pairs)))))
 
 (defn- get-parent
 	[src obj]
-	(if (empty? (:parent (src obj)))
-		nil 
-		((:parent (src obj)) 0)))
+	(let [ps (:parent (src obj))]
+		(if (empty? ps)
+			nil 
+			(ps 0))))
 
 (defn update-points
 	[obj src k]
-	(if (nil? src)
-		obj
-		(if (< k 0)
+	(if src
+		(if (neg? k)
 			(update-points  obj  (get-parent src obj)  (inc k))
 			(update-points 
-				(update-in obj [src :point] #(+ % (math/expt 0.5 k)))
-				(get-parent src obj) (inc k)))))
+				(update-in obj [src :point] #(+ % (math/expt 0.5M k)))
+				(get-parent src obj) (inc k)))
+		obj))
 
 (defn update-obj
 	[obj [src dst]]
@@ -56,27 +57,27 @@
 (defn build
 	[input]
 	(loop [obj {} [pair & input#] input]
-		(if (nil? pair)
-			obj
-			(recur 
-				(update-obj obj pair)
-				input#))))
+		(if pair
+			(recur (update-obj obj pair) input#)
+			obj)))
 
 (defn input-from-file
 	[file-path]
-	(let [input (ref [])]
+	(let [input (ref []) to-key #(keyword (str %))]
 		(with-open [rdr (io/reader file-path)]
-			(doseq [line (line-seq rdr)]
-				(let [numbers (clojure.string/split line #" ") src (keyword (str (first numbers))) dst (keyword (str (second numbers)))]
-					(dosync (alter input conj [src dst])))))
+			(doseq [line (line-seq rdr)] ;PORQUE FOR NÂO FUNCIONA AQUI???
+				(let [numbers (clojure.string/split line #" ") 
+				  src (to-key (first numbers)) 
+				  dst (to-key (second numbers))]
+				(dosync (alter input conj [src dst])))))
 		@input))
 
 (defn parse-result
 	[obj]
 	(loop [[[key value] & obj#] (seq obj) result {}]
-		(if (nil? key)
-			(json/write-str result)
-			(recur obj# (assoc result key (:point value))))))
+		(if key
+			(recur obj# (assoc result key (:point value)))
+			(json/write-str result))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SERVER CONFIGURATION

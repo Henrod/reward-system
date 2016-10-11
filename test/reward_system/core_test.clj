@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [reward-system.core :refer :all]))
 
-(def number-of-tests 1000)
+(def number-of-tests 100)
 (def max-number (* number-of-tests 10))
 
 (defn- rand-number-keyword
@@ -14,11 +14,8 @@
 
 (deftest add-to-input-test
 	(testing "Adding new users to input"
-		(loop [	n 0 
-         			result [] 
-            			src (rand-number-keyword) 
-               		dst (rand-number-keyword)]
-			(when (< n number-of-tests)
+		(loop [n 0 result [] src (rand-number-keyword) dst (rand-number-keyword)]
+			(if (< n number-of-tests)
 				(let [new-result (add-to-input result src dst)]
 					(is (= (inc (count result)) (count new-result)))
 					(is (= (last new-result) [src dst]))
@@ -26,25 +23,22 @@
 
 (deftest update-obj-test
 	(testing "Update one pair of users to input"
-    		(loop [	src (rand-number-keyword)
-                		dst (rand-number-keyword src)
-                		result (update-obj {} [src dst])
-                		n 0]
-                	(when (< n number-of-tests)
+    		(loop [	src (rand-number-keyword) dst (rand-number-keyword src) result (update-obj {} [src dst]) n 0]
+                	(if (< n number-of-tests)
 	                	(let [new-result (update-obj result [src dst])
 	                		  get-parent (fn [k m] 
 	                		  				(if (empty? (:parent (k m))) 
 	                		  					nil 
 	                		  					((:parent (k m)) 0)))
 	                		  parent (get-parent src new-result)]
-	                		  (if (not (nil? parent))
-		                		  (if (not (empty? (:neighbors (src result))))
-		                			(is (= (parent result) (parent new-result)))
-		                			(loop [gparent parent k 1.0]
-		                				(when (not (nil? gparent))
+	                		  (if parent
+		                		  (if (empty? (:neighbors (src result)))
+		                			(loop [gparent parent k 1.0M]
+		                				(when gparent
 			                				(is (= (:point (gparent new-result)) (:point (update (gparent result) :point #(+ k %)))))
-			                				(recur (get-parent gparent result) (/ k 2))))))
-	                	(let [next-src ((into [] (keys new-result)) (rand-int (count new-result)))
+			                				(recur (get-parent gparent result) (/ k 2))))
+		                			(is (= (parent result) (parent new-result)))))
+	                	(let [next-src ((vec (keys new-result)) (rand-int (count new-result)))
 	                		 next-dst (rand-number-keyword next-src)]
 	                		(recur next-src next-dst new-result  (inc n))))))))
 
@@ -61,10 +55,10 @@
 (defn inverseBFS
 	[input]
 	(let [result (build input)
-		  users (distinct (into [] (map second input)))]
+		  users (distinct (map second input))]
 	  	(loop [[user & users#] users
 	  			parents (:parent (result user)) 
-	  			count (reduce #(assoc %1 %2 0) {} (keys result)) 
+	  			count (apply assoc {} (interleave (keys result) (repeat 0))) 
 	  			been-invited #{}]
 	  		(if (nil? user)
 	  			(for [c count]
@@ -72,7 +66,7 @@
 	  			(recur 
 	  				users#
 	  				(:parent (result (first users#)))
-	  				(loop [k 1.0 [level-count level-parents been-invited] [count parents been-invited]]
+	  				(loop [k 1.0M [level-count level-parents been-invited] [count parents been-invited]]
 	  					(if (empty? level-parents)
 	  						level-count
 		  					(recur 
@@ -81,8 +75,7 @@
 			  							inner-count level-count 
 			  							next-parents [] 
 			  							next-been-invited been-invited]
-			  						(if (nil? parent)
-			  							[inner-count next-parents been-invited]
+			  						(if parent
 					  					(if (or (empty? (:neighbors (result user))) (contains? next-been-invited user))
 					  						(recur 
 					  							parents# 
@@ -93,7 +86,8 @@
 					  							parents#
 					  							(update inner-count parent  #(+ % k))
 					  							(concat next-parents (:parent (result parent))) 
-					  							(conj next-been-invited user))))))))
+					  							(conj next-been-invited user)))
+					  					[inner-count next-parents been-invited])))))
 	  				(conj been-invited user))))))
 
 (deftest build-test
