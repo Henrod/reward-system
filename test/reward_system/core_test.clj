@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [reward-system.core :refer :all]))
 
-(def number-of-tests 100)
+(def number-of-tests 1000)
 (def max-number (* number-of-tests 10))
 
 (defn- rand-number-keyword
@@ -23,9 +23,9 @@
 
 (deftest update-obj-test
 	(testing "Update one pair of users to input"
-    		(loop [	src (rand-number-keyword) dst (rand-number-keyword src) result (update-obj {} [src dst]) n 0]
+    		(loop [	src (rand-number-keyword) dst (rand-number-keyword src) result (update-obj {} src dst) n 0]
                 	(if (< n number-of-tests)
-	                	(let [new-result (update-obj result [src dst])
+	                	(let [new-result (update-obj result src dst)
 	                		  get-parent (fn [k m] 
 	                		  				(if (empty? (:parent (k m))) 
 	                		  					nil 
@@ -55,7 +55,7 @@
 (defn inverseBFS
 	[input]
 	(let [result (build input)
-		  users (distinct (map second input))]
+		  users (distinct (map second (partition 2 input)))]
 	  	(loop [[user & users#] users
 	  			parents (:parent (result user)) 
 	  			count (apply assoc {} (interleave (keys result) (repeat 0))) 

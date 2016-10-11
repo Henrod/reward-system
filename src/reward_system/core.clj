@@ -10,7 +10,7 @@
 
 (defn add-to-input
 	[input & pairs]
-	(vec (concat input (map vec (partition 2 pairs)))))
+	(conj input pairs))
 
 (defn- get-parent
 	[src obj]
@@ -27,7 +27,7 @@
 		obj))
 
 (defn update-obj
-	[obj [src dst]]
+	[obj src dst]
 	(if (= src dst)
 		obj
 		(if (contains? obj src)
@@ -53,9 +53,9 @@
 
 (defn build
 	[input]
-	(loop [obj {} [pair & input#] input]
-		(if pair
-			(recur (update-obj obj pair) input#)
+	(loop [obj {} [src dst & input#] input]
+		(if (and src dst)
+			(recur (update-obj obj src dst) input#)
 			obj)))
 
 (defn input-from-file
@@ -64,7 +64,7 @@
 		(with-open [rdr (io/reader file-path)]
 			(doseq [line (line-seq rdr)] ;PORQUE FOR NÂO FUNCIONA AQUI???
 				(let [[src dst] (map to-key (clojure.string/split line #" "))]
-					(dosync (alter input conj [src dst])))))
+					(dosync (alter input conj src dst)))))
 		@input))
 
 (defn parse-result
