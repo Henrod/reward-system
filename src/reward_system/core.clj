@@ -28,7 +28,7 @@
 
 (defn update-obj
 	[obj src dst]
-	(if (= src dst)
+	(if (or (= src dst) (nil? dst) (nil? src))
 		obj
 		(if (contains? obj src)
 			(if (some #{dst} (get-in obj [src :neighbors]))
@@ -55,10 +55,7 @@
 
 (defn build
 	[input]
-	(loop [obj {} [src dst & input#] input]
-		(if (and src dst)
-			(recur (update-obj obj src dst) input#)
-			obj)))
+	(reduce (fn [obj [src dst]]  (update-obj obj src dst))  {}  (partition 2 input)))
 
 (defn input-from-file
 	[file-path]
@@ -69,29 +66,34 @@
 					(dosync (alter input conj src dst)))))
 		@input))
 
+(defn parse-value
+	[value]
+	(cond
+		(zero? value) "0"
+		(= 0M (rem value 1)) (str (int value) ".0")
+		(= \0 (last (str value))) ((first (re-seq #"(\d+.(0*[1-9]+)*)(0*)$" (str value))) 1)
+		:else (str value)))
+
 (defn parse-result
 	[obj]
-	(loop [[[key value] & obj#] (seq obj) result {}]
-		(if key
-			(recur obj# (assoc result key (:point value)))
-			(json/write-str result))))
+	(json/write-str (reduce (fn [res [key val]] (assoc res key (parse-value (:point val)))) {} obj)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SERVER CONFIGURATION
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defroutes routes
 	(GET "/" [] {:status 200
-				 :headers {"Content-Type" "application/json"}
-				 :body (parse-result (build (input-from-file "test/reward_system/input.txt")))})
+		           :headers {"Content-Type" "application/json"}
+		           :body (parse-result (build (input-from-file "test/reward_system/input.txt")))})
 	(GET "/little" [] {:status 200
-				 :headers {"Content-Type" "application/json"}
-				 :body (parse-result (build (input-from-file "test/reward_system/little_input.txt")))})
+			         :headers {"Content-Type" "application/json"}
+			         :body (parse-result (build (input-from-file "test/reward_system/little_input.txt")))})
 	(POST "/" req 
-		(let [obj (json/read-str ((:params req) "obj")  :key-fn keyword)
-			  input (reduce #(concat %1 (map (fn [elm] (if (keyword? elm) elm (keyword (str elm)))) %2)) [] (seq obj))]
-			  {:status 200
-				 :headers {"Content-Type" "application/json"}
-				 :body (parse-result (build (apply add-to-input (input-from-file "test/reward_system/little_input.txt") input)))})))
+		(let [	obj (json/read-str (get-in req [:params "obj"] "{}") :key-fn keyword)
+			input (reduce (fn [res [f s]] (conj res f (keyword (str s)))) [] obj)]
+			{:status 200
+			  :headers {"Content-Type" "application/json"}
+			  :body (parse-result (build (apply add-to-input (input-from-file "test/reward_system/little_input.txt") input)))})))
 
 (def app (wrap-params routes))
 
