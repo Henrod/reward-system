@@ -10,7 +10,7 @@
 
 (defn add-to-input
 	[input & pairs]
-	(conj input pairs))
+	(apply conj input pairs))
 
 (defn- get-parent
 	[src obj]
@@ -47,9 +47,11 @@
 							(assoc 
 								new-obj
 								dst {:neighbors [] :parent [src] :point 0})))))
-			(assoc  obj 
-				src {:neighbors [dst] :parent [] :point 0} 
-				dst {:neighbors [] :parent [src] :point 0}))))
+			(if (empty? obj) 
+				(assoc  obj 
+					src {:neighbors [dst] :parent [] :point 0} 
+					dst {:neighbors [] :parent [src] :point 0})
+				obj))))
 
 (defn build
 	[input]
