@@ -18,40 +18,38 @@
 
 (defn update-points
 	[obj src k]
-	(if src
+	(if (nil? src)
+		obj
 		(if (neg? k)
 			(update-points  obj  (get-parent src obj)  (inc k))
 			(update-points 
 				(update-in obj [src :point] #(+ % (math/expt 0.5M k)))
-				(get-parent src obj) (inc k)))
-		obj))
+				(get-parent src obj) (inc k)))))
+
+(defn nor [a b] (not (or a b)))
 
 (defn update-obj
 	[obj src dst]
-	(if (or (= src dst) (nil? dst) (nil? src))
-		obj
-		(if (contains? obj src)
-			(if (some #{dst} (get-in obj [src :neighbors]))
+	(cond (or (= src dst) (nil? dst) (nil? src) 
+		 	(and (contains? obj src) (some #{dst} (get-in obj [src :neighbors]))) 
+		 	(nor (contains? obj src) (empty? obj)))
 				obj
-				(let [new-obj (update-in obj [src :neighbors] #(conj % dst))]
-					(if (contains? obj dst)
-						(if (empty? (get-in obj [src :neighbors]))
+		(and (not (contains? obj src)) (empty? obj))
+			(assoc  obj 
+				src {:neighbors [dst] :parent [] :point 0} 
+				dst {:neighbors [] :parent [src] :point 0})
+		:else (let [ new-obj (update-in obj [src :neighbors] #(conj % dst))
+				dst-in-graph (contains? obj dst)
+				src-is-leaf (empty? (get-in obj [src :neighbors]))]
+					(cond 
+						(and dst-in-graph src-is-leaf) 
 							(update-points (update-in new-obj [dst :parent] #(conj % src)) src -1)
-							new-obj)
-						(if (empty? (get-in obj [src :neighbors]))
-							(update-points
-								(assoc 
-									new-obj
-									dst {:neighbors [] :parent [src] :point 0})
-								src -1)
-							(assoc 
-								new-obj
-								dst {:neighbors [] :parent [src] :point 0})))))
-			(if (empty? obj) 
-				(assoc  obj 
-					src {:neighbors [dst] :parent [] :point 0} 
-					dst {:neighbors [] :parent [src] :point 0})
-				obj))))
+						(and dst-in-graph (not src-is-leaf)) 
+							new-obj
+						(and (not dst-in-graph) src-is-leaf) 
+							(update-points (assoc new-obj dst {:neighbors [] :parent [src] :point 0}) src  -1)
+						:else 
+							(assoc new-obj dst {:neighbors [] :parent [src] :point 0})))))
 
 (defn build
 	[input]
@@ -59,7 +57,7 @@
 
 (defn input-from-file
 	[file-path]
-	(let [input (ref []) to-key #(keyword (str %))]
+	(let [input (ref []) to-key (comp keyword str)]
 		(with-open [rdr (io/reader file-path)]
 			(doseq [line (line-seq rdr)]
 				(let [[src dst] (map to-key (clojure.string/split line #" "))]
@@ -69,18 +67,20 @@
 (defn parse-value
 	[value]
 	(cond
-		(zero? value) "0"
-		(= 0M (rem value 1)) (str (int value) ".0")
-		(= \0 (last (str value))) ((first (re-seq #"(\d+.(0*[1-9]+)*)(0*)$" (str value))) 1)
-		:else (str value)))
+		(zero? value) 
+			"0"
+		(= 0M (rem value 1)) 
+			(str (int value) ".0")
+		(= \0 (last (str value))) 
+			((first (re-seq #"(\d+.(0*[1-9]+)*)(0*)$" (str value))) 1)
+		:else 
+			(str value)))
 
 (defn parse-result
 	[obj]
-	(json/write-str (reduce (fn [res [key val]] (assoc res key (parse-value (:point val)))) {} obj)))
+	(json/write-str (zipmap (keys obj) (map (comp parse-value :point) (vals obj)))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; SERVER CONFIGURATION
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Server Configuration
 (defroutes routes
 	(GET "/" [] {:status 200
 		           :headers {"Content-Type" "application/json"}
