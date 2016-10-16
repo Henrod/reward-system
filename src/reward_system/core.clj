@@ -23,7 +23,7 @@
 		(if (neg? k)
 			(update-points  obj  (get-parent src obj)  (inc k))
 			(update-points 
-				(update-in obj [src :point] #(+ % (math/expt 0.5M k)))
+				(update-in obj [src :point] (partial + (math/expt 0.5M k)))
 				(get-parent src obj) (inc k)))))
 
 (defn nor [a b] (not (or a b)))
@@ -35,9 +35,9 @@
 		 	(nor (contains? obj src) (empty? obj)))
 				obj
 		(and (not (contains? obj src)) (empty? obj))
-			(assoc  obj 
-				src {:neighbors [dst] :parent [] :point 0} 
-				dst {:neighbors [] :parent [src] :point 0})
+			(merge  obj 
+				{src {:neighbors [dst] :parent [] :point 0}
+				dst {:neighbors [] :parent [src] :point 0}})
 		:else (let [ new-obj (update-in obj [src :neighbors] #(conj % dst))
 				dst-in-graph (contains? obj dst)
 				src-is-leaf (empty? (get-in obj [src :neighbors]))]
@@ -47,9 +47,9 @@
 						(and dst-in-graph (not src-is-leaf)) 
 							new-obj
 						(and (not dst-in-graph) src-is-leaf) 
-							(update-points (assoc new-obj dst {:neighbors [] :parent [src] :point 0}) src  -1)
+							(update-points (merge new-obj {dst {:neighbors [] :parent [src] :point 0}}) src  -1)
 						:else 
-							(assoc new-obj dst {:neighbors [] :parent [src] :point 0})))))
+							(merge new-obj {dst {:neighbors [] :parent [src] :point 0}})))))
 
 (defn build
 	[input]
