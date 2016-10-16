@@ -71,8 +71,12 @@
 			"0"
 		(= 0M (rem value 1)) 
 			(str (int value) ".0")
-		(= \0 (last (str value))) 
-			((first (re-seq #"(\d+.(0*[1-9]+)*)(0*)$" (str value))) 1)
+		(= \0 (last (str value)))
+			(->> value 
+				str 
+				(re-seq #"(\d+.(0*[1-9]+)*)(0*)$") 
+				first 
+				second)
 		:else 
 			(str value)))
 
@@ -83,17 +87,23 @@
 ; Server Configuration
 (defroutes routes
 	(GET "/" [] {:status 200
-		           :headers {"Content-Type" "application/json"}
-		           :body (parse-result (build (input-from-file "test/reward_system/input.txt")))})
+		            :headers {"Content-Type" "application/json"}
+		            :body (-> (input-from-file "test/reward_system/input.txt")
+		            		build
+		           			parse-result)})
 	(GET "/little" [] {:status 200
-			         :headers {"Content-Type" "application/json"}
-			         :body (parse-result (build (input-from-file "test/reward_system/little_input.txt")))})
+			          :headers {"Content-Type" "application/json"}
+			          :body (-> (input-from-file "test/reward_system/little_input.txt")
+		            			build
+		           				parse-result)})
 	(POST "/" req 
 		(let [	obj (json/read-str (get-in req [:params "obj"] "{}") :key-fn keyword)
-			input (reduce (fn [res [f s]] (conj res f (keyword (str s)))) [] obj)]
+			input (reduce (fn [res [f s]] (conj res f (-> s str keyword))) [] obj)]
 			{:status 200
 			  :headers {"Content-Type" "application/json"}
-			  :body (parse-result (build (apply add-to-input (input-from-file "test/reward_system/little_input.txt") input)))})))
+			  :body (-> (apply add-to-input (input-from-file "test/reward_system/little_input.txt") input)
+			  		build
+			  		parse-result)})))
 
 (def app (wrap-params routes))
 
