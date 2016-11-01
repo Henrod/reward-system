@@ -39,17 +39,22 @@
 			conj
 			node)))
 
+(defn add-nodes [graph nps]
+	{:pre [(even? (count nps))]}
+	(let [lls (partition 2 nps)]
+		(reduce (fn [m [s d]] (add-node m d s)) graph lls)))
+
 (defn read-file [file]
 	(let [input (slurp file)]
-		(map read-string (filter #(not (empty? %)) (clojure.string/split input #"\s|\r\n")))))
+		(pmap read-string (filter #(not (empty? %)) (clojure.string/split input #"\s|\r\n")))))
 
 (defn build-from-file [file]
-	(let [input (partition 2 (read-file file))
-		     root (-> input first first)
+	(let [input (read-file file)
+		     root (first input)
 		     graph {root {:par nil :pts 0M :adj #{}}}]
-	(reduce (fn [m [par son]] (add-node m son par)) graph input)))
+	(add-nodes graph input)))
 
 (defn rank [graph]
 	(let [p (fn [k] (-> k graph :pts))
 		     r (reverse (sort-by p (keys graph)))]
-		(map list r (map #(-> % graph :pts) r))))
+		(pmap list r (pmap #(-> % graph :pts) r))))
