@@ -4,7 +4,8 @@
     		[ring.middleware.params :refer [wrap-params]]
     		[ring.middleware.reload :refer [wrap-reload]]
     		[reward-system.core :refer :all]
-    		[ring.util.response :as res]))
+    		[ring.util.response :as res]
+    		[compojure.route :as route]))
 
 (def invites (atom []))
 
@@ -28,7 +29,8 @@
 
 (defroutes routes
 	(POST "/rank" request (handler request :rank))
-	(POST "/add"  request (handler request :add)))
+	(POST "/add"  request (handler request :add))
+   (route/not-found "Error 404: Page not found"))
 
 (def app (-> routes
 		           (wrap-params)
