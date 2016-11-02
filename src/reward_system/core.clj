@@ -8,7 +8,7 @@
 (defn repeated-invitation 
    "Repeat an old invitation can't generate further points"
 	[network node parent]
-	(contains? (:adj network) node))
+	(contains? (-> parent network :adj) node))
 
 (defn invitee-not-in-network 
     "A person outside the network can't invite anyone"
