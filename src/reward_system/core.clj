@@ -2,8 +2,13 @@
 
 (defn self-inviting 
 	"A person can't invite himself/herself"
-	[network node parent]
+	[_ node parent]
 	(= node parent))
+
+(defn nil-inviting
+	"Check if invited or invitee are nil"
+	[_ node parent]
+	(or (nil? node) (nil? parent)))
 
 (defn repeated-invitation 
    "Repeat an old invitation can't generate further points"
@@ -12,16 +17,17 @@
 
 (defn invitee-not-in-network 
     "A person outside the network can't invite anyone"
-	[network node parent]
+	[network _ parent]
 	(not (contains? network parent)))
 
 (defn not-respect-constraints 
    "Return an array of booleans. True for each constraint it doesn't respect"
 	[network node parent]
-	(some true? ((juxt 
-                              self-inviting
-                              invitee-not-in-network
-		                       repeated-invitation) network node parent)))
+	(some true? ((juxt self-inviting
+										 invitee-not-in-network
+                     nil-inviting
+                     repeated-invitation)
+                network node parent)))
 
 (defn update-points 
    "Update the points of a parent and backwards until the root. Return the network"

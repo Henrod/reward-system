@@ -17,6 +17,15 @@
 	(testing "Repeated invite"
 		(is (true? (not-respect-constraints little-network 2 1))))
 
+	(testing "nil inviting"
+		(is (true? (not-respect-constraints little-network 2 nil))))
+
+	(testing "nil being invited"
+		(is (true? (not-respect-constraints little-network nil 1))))
+
+	(testing "nil inviting nil"
+		(is (true? (not-respect-constraints little-network nil nil))))
+
 	(testing "Invitee not in the network"
 		(is (true? (not-respect-constraints little-network 1 1000)))))
 
@@ -79,7 +88,19 @@
                    3 {:par 1, :adj #{4}, :pts 1M}
                    4 {:par 3, :adj #{5 6}, :pts 0M}
                    5 {:par 4, :adj #{}, :pts 0M}
-                   6 {:par 4, :adj #{}, :pts 0M}}))))
+                   6 {:par 4, :adj #{}, :pts 0M}})))
+
+	(testing "nil inviting someone"
+		(is (= little-network
+			       (add-node little-network 1 nil))))
+
+	(testing "nil being invited"
+		(is (= little-network
+			       (add-node little-network nil 1))))
+
+	(testing "nil inviting nil"
+		(is (= little-network
+			       (add-node little-network nil nil)))))
 
 (deftest test-build-from-file
 	(is (= (build-from-file "test/reward_system/little_input.txt")
